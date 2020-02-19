@@ -1,0 +1,141 @@
+1.	Edge-LB 서비스 정리
+
+1-1.	Edge-LB 패키지 다운로드 (local-universe 문서로 정리)
+1-2.	서비스 계정 준비.
+준비 단계 정리 
+1.	공개 / 개인 키 쌍을 만듭니다.
+2.	서비스 계정의 보안 주체를 만듭니다.
+3.	서비스 계정 사용자에게 권한을 할당하십시오.
+4.	서비스 계정 principal과 연관된 secret 설정 및 저장하십시오.
+
+1-2-1. 공개 / 개인 키 쌍 생성 (작업 디렉토리 잘 확인 후 생성 및 관리)
+dcos security org service-accounts keypair edge-lb-private-key.pem edge-lb-public-key.pem
+
+1-2-2. 서비스 계정 보안 주체 생성
+dcos security org service-accounts create -p edge-lb-public-key.pem -d "Edge-LB service account" edge-lb-principal
+
+1-2-3. secret 설정
+dcos security secrets create-sa-secret --strict edge-lb-private-key.pem edge-lb-principal dcos-edgelb/edge-lb-secret
+
+1-2-4. edge-lb-principal 를 슈퍼 유저 그룹에 포함하여 Edge-LB 작업 및 업그레이드 권한 줌
+dcos security org groups add_user superusers edge-lb-principal
+
+1-2-4-1. 최소 권한 원칙으로 인한 사용자 그룹 권한 설정시
+dcos security org users grant edge-lb-principal dcos:adminrouter:service:marathon full
+dcos security org users grant edge-lb-principal dcos:adminrouter:package full
+dcos security org users grant edge-lb-principal dcos:adminrouter:service:edgelb full
+dcos security org users grant edge-lb-principal dcos:service:marathon:marathon:services:/dcos-edgelb full
+dcos security org users grant edge-lb-principal dcos:mesos:master:endpoint:path:/api/v1 full
+dcos security org users grant edge-lb-principal dcos:mesos:master:endpoint:path:/api/v1/scheduler full
+dcos security org users grant edge-lb-principal dcos:mesos:master:framework:principal:edge-lb-principal full
+dcos security org users grant edge-lb-principal dcos:mesos:master:framework:role full
+dcos security org users grant edge-lb-principal dcos:mesos:master:reservation:principal:edge-lb-principal full
+dcos security org users grant edge-lb-principal dcos:mesos:master:reservation:role full
+dcos security org users grant edge-lb-principal dcos:mesos:master:volume:principal:edge-lb-principal full
+dcos security org users grant edge-lb-principal dcos:mesos:master:volume:role full
+dcos security org users grant edge-lb-principal dcos:mesos:master:task:user:root full
+dcos security org users grant edge-lb-principal dcos:mesos:master:task:app_id full
+
+1-2-4-2. 최소 권한 설정시 생성할 각 Edge-LB 풀에 대해 아래 권한 설정 해야함
+dcos security org users grant edge-lb-principal dcos:adminrouter:service:dcos-edgelb/pools/<pool-name> full
+
+
+1-3.	Edge-LB 설치
+vi edge-lb-options.json
+
+{
+  "service": {
+    "secretName": "dcos-edgelb/edge-lb-secret",
+    "principal": "edge-lb-principal",
+    "mesosProtocol": "https"
+  }
+}
+
+dcos package install --options=edge-lb-options.json edgelb
+
+1-3-1. 설치 완료 테스트 
+until dcos edgelb ping; do sleep 1; done
+
+2.	Edge-LB pool 생성 및 예 (Kubernetes edgeLB 구성)
+
+V2 pool 레퍼런스 : 
+https://docs.d2iq.com/mesosphere/dcos/services/edge-lb/1.4/pool-configuration/v2-reference/
+
+Vi edgelb.json
+
+
+{
+    "apiVersion": "V2",
+    "name": "edgelb-kubernetes-cluster-proxy-basic",
+    "count": 1,
+    "autoCertificate": true,
+    "haproxy": {
+        "frontends": [{
+                "bindPort": 6443,
+                "protocol": "HTTPS",
+                "certificates": [
+                    "$AUTOCERT"
+                ],
+                "linkBackend": {
+                    "defaultBackend": "kubernetes-cluster1"
+                }
+            },
+            {
+                "bindPort": 6444,
+                "protocol": "HTTPS",
+                "certificates": [
+                    "$AUTOCERT"
+                ],
+                "linkBackend": {
+                    "defaultBackend": "kubernetes-cluster2"
+                }
+            }
+        ],
+        "backends": [{
+                "name": "kubernetes-cluster1",
+                "protocol": "HTTPS",
+                "services": [{
+                    "mesos": {
+                        "frameworkName": "kubernetes-cluster1",
+                        "taskNamePattern": "kube-control-plane"
+                    },
+                    "endpoint": {
+                        "portName": "apiserver"
+                    }
+                }]
+            },
+            {
+                "name": "kubernetes-cluster2",
+                "protocol": "HTTPS",
+                "services": [{
+                    "mesos": {
+                        "frameworkName": "kubernetes-cluster2",
+                        "taskNamePattern": "kube-control-plane"
+                    },
+                    "endpoint": {
+                        "portName": "apiserver"
+
+                    }
+                }]
+            }
+        ],
+        "stats": {
+            "bindPort": 6090
+        }
+    }
+}
+
+
+2-1. Kubernetes Edge-LB pool 배포
+dcos edgelb create edgelb.json
+
+2-2. Edge-LB pool 상태 확인
+dcos edgelb status edgelb-kubernetes-cluster-proxy-basic
+
+STATE  값이 TASK_RUNNING 이어야 함.(중요)
+GUI 화면에서 해당 pool 인스턴스 2개 생성되어야 정상.
+
+위는 쿠버네티스 API 접속 edge-LB pool 입니다.
+위대로 설정 완료되면 Kubernetes api 접속이 정상적으로 이루어져야 합니다.
+
+오류 내용 : Edge-LB pool 생성 실패 원인은 대부분 pool 생성시 사용하는 port 사용 중복으로 인한 문제로 확인. 퍼블릭 서버에서 사용 가능 포트 확인 후 설정 할 것
