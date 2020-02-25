@@ -1,0 +1,43 @@
+부트 스트랩 노드
+
+엔터프라이즈 사용자
+이 절차는 DC / OS 1.12 클러스터를 DC / OS 1.13으로 업그레이드합니다.
+
+1. 기존 파일 config.yaml과 ip-detect파일을 genconf부트 스트랩 노드 의 빈 폴더에 복사하십시오 . 폴더는 설치 프로그램과 동일한 디렉토리에 있어야합니다.
+
+2. config.yaml기존 config.yaml형식을 새로운 형식 으로 병합하십시오. 대부분의 경우 차이가 최소화됩니다.
+-exhibitor_zk_backend업그레이드 중에는 설정을 변경할 수 없습니다.
+-config.yaml파일 의 구문은 이전 버전과 다를 수 있습니다. 현재 config.yaml구문과 매개 변수에 대한 자세한 설명은 설명서를 참조하십시오.
+
+3. config.yaml 형식을 업데이트 한 후 이전 config.yaml과 새 config.yaml을 비교하십시오. 경로 나 구성에 차이가 없는지 확인하십시오. 
+ 업그레이드하는 동안 이들을 변경하면 치명적인 클러스터 오류가 발생할 수 있습니다.
+
+4. ip-detect원하는대로 파일을 수정하십시오 .
+
+5. 설치 프로그램 패키지를 빌드하십시오.
+ -dcos_generate_config.ee.sh파일을 다운로드 하십시오.
+ -설치 파일을 생성하십시오. 
+ex) <installed_cluster_version>를 들어 아래 명령에서 업그레이드하려는 클러스터에서 현재 실행중인 DC / OS 버전으로 바꾸십시오 1.11.6.
+      *bash dcos_generate_config.ee.sh --generate-node-upgrade-script <installed_cluster_version>
+
+ -이전 단계의 명령은 출력의 마지막 줄에 접두사가 붙은 URL을 생성합니다 Node upgrade script URL:. 
+ 이후 단계에서 사용하기 위해이 URL을 기록하십시오. 이 문서에서는“노드 업그레이드 스크립트 URL”이라고합니다.
+ -Docker run 명령을 사용하여 설치 파일 을 제공하려면 nginx 컨테이너를 실행하십시오 .
+ 
+6. DC / OS 마스터 절차 로 이동 하여 설치를 완료하십시오.
+
+
+DC / OS 마스터
+다음 절차에 따라 모든 마스터 노드를 한 번에 하나씩 순서대로 업그레이드하십시오. 각 업그레이드를 완료 할 때 Mesos 마스터 메트릭을 모니터링하여 노드가 
+클러스터에 다시 참여하고 조정을 완료했는지 확인하십시오.
+
+1.노드 업그레이드 스크립트를 다운로드하여 실행하십시오.
+ -curl -O <Node upgrade script URL>
+ -sudo bash dcos_node_upgrade.sh
+
+2.업그레이드 스크립트가 성공하고 상태 코드로 종료되었는지 확인하십시오 0.
+ -echo $?
+ 결과:0
+
+agent노드들도 똑같이 진행!
+
