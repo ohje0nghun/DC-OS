@@ -1,0 +1,26 @@
+1.12.2 -> 2.0.2 클러스터 업그레이드 한번에 불가
+1.12.2 -> 1.13.7 -> 2.0.2 2번 업데이트 진행
+
+1.dcos cluster backup 진행
+dcos CLI목록중에 backup기능 없을경우 CLI제거후 최신버전으로 다운
+-rm -rf /usr/local/bin/dcos -> 기존CLI제거
+-CLI install 명령어중에 dcos1.12 -> latest 로 교체
+
+2.dcos backup create --label=<label id지정>으로 백업 작성
+
+3.dcos backup list로 생성 확인후 클러스터 업그레이드 진행
+
+4.bootstrap 노드에서 업데이트 하고자하는 버젼에 dcos_generate_config.ee.sh 파일 설치후 
+  *bash dcos_generate_config.ee.sh --generate-node-upgrade-script <installed_cluster_version(현재 클러스터 version)> 실행
+  
+5.실행이 완료되면 마지막줄에 접두사가 붙은 URL 생성됨  ex)Node upgrade script URL: ...
+이후 단계에서 사용하기위해 URL복사
+
+6.master 노드로 이동후 노드 업그레이드 스크립트 다운로드후 실행
+ -curl -O <Node upgrade script URL>
+ -sudo bash dcos_node_upgrade.sh
+ 
+7.업그레이드 스크립트가 성공하고 상태코드로 종료되었는지 확인
+   -echo $?
+    결과:0
+8.dcos --version 실행 후 업그레이드 확인 -> 정상적으로 되었으면 agent node도 똑같이 실행!
