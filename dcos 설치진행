@@ -1,0 +1,98 @@
+Bootstrap(private이용 노드중 하나로 진행)
+
+systemctl stop firewalld && systemctl disable firewalld    //방화벽 끄기
+
+yum -y install ntp  //ntp설치
+
+timedatactl set-ntp yes //ntp enabled yes확인
+systemctl start ntpd && systemctl enable ntpd   //ntp synchroized yes확인
+
+bash setup_env.sh   //setup 스크립트 실행
+
+docker install //https://docs.docker.com/engine/install/centos/ <-여기서 설치
+systemctl start docker && systemctl enable docker //docker start 및 enable 활성화
+
+mkdir genconf
+cd genconf
+config.yaml,ip-detect,license.txt 파일 복사
+
+dcos_generate_cofing.ee.sh 설치 
+
+bash dcos_generate_cofing.ee.sh --hash-password kbsys1234 //dcos password hash코드 생성
+->여기서 받은 hash코드 config.yaml에 적용
+
+bash dcos_generate_cofing.ee.sh //dcos_generate_cofing.ee.sh 스크립트 실행
+
+docker run -d -p 80:80 -v $PWD/genconf/serve:/usr/share/nginx/html nginx 
+
+---------------------------------------------------------------------------------------------------------------------------
+master(1대)
+
+systemctl stop firewalld && systemctl disable firewalld    //방화벽 끄기
+
+yum -y install ntp  //ntp설치
+
+timedatactl set-ntp yes //ntp enabled yes확인
+systemctl start ntpd && systemctl enable ntpd   //ntp synchroized yes확인
+
+curl -O http://<bootstrap ip>:80/dcos_install.sh //dcos_install.sh 파일 설치
+bash dcos_install.sh master //dcos master 설치 스크립트 실행
+
+---------------------------------------------------------------------------------------------------------------------------
+public(1개)
+systemctl stop firewalld && systemctl disable firewalld    //방화벽 끄기
+
+yum -y install ntp  //ntp설치
+
+timedatactl set-ntp yes //ntp enabled yes확인
+systemctl start ntpd && systemctl enable ntpd   //ntp synchroized yes확인
+
+docker install //https://docs.docker.com/engine/install/centos/ <-여기서 설치
+systemctl start docker && systemctl enable docker //docker start 및 enable 활성화
+
+curl -O http://<bootstrap ip>:80/dcos_install.sh //dcos_install.sh 파일 설치
+bash dcos_install.sh slave_public //dcos public 설치 스크립트 실행
+---------------------------------------------------------------------------------------------------------------------------
+private(10개) //1개는 bootstrap용으로 이용 후 private설치
+systemctl stop firewalld && systemctl disable firewalld    //방화벽 끄기
+
+yum -y install ntp  //ntp설치
+
+timedatactl set-ntp yes //ntp enabled yes확인
+systemctl start ntpd && systemctl enable ntpd   //ntp synchroized yes확인
+
+docker install //https://docs.docker.com/engine/install/centos/ <-여기서 설치
+systemctl start docker && systemctl enable docker //docker start 및 enable 활성화
+
+curl -O http://<bootstrap ip>:80/dcos_install.sh //dcos_install.sh 파일 설치
+bash dcos_install.sh slave //dcos private 설치 스크립트 실행
+
+
+dc/os UI 접속 후 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
