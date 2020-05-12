@@ -1,0 +1,110 @@
+kind: ClusterConfiguration
+apiVersion: konvoy.mesosphere.io/v1beta1
+metadata:
+  name: new-cluster
+  creationTimestamp: "2020-03-31T08:21:07Z"
+spec:
+  kubernetes:
+    version: 1.16.8
+    controlPlane:
+      controlPlaneEndpointOverride: "192.168.0.230:6443"      //쓸수있는 서버에 6443포트로 고정
+      certificate: {}
+      keepalived: {}
+    networking:
+      podSubnet: 192.168.100.0/24            //podsubnet,servicesubnet둘다 default값이라 다른곳에서 사용중이면 안됨
+      serviceSubnet: 10.0.0.0/18             
+    cloudProvider:
+      provider: none
+    admissionPlugins:
+      enabled:
+      - AlwaysPullImages
+      - NodeRestriction
+  containerNetworking:
+    calico:
+      version: v3.13.1
+      encapsulation: ipip
+      mtu: 1480
+  containerRuntime:
+    containerd:
+      version: 1.2.6
+  osPackages:
+    enableAdditionalRepositories: true
+  nodePools:
+  - name: worker
+  - name: gpu-worker
+    gpu:
+      nvidia: {}
+  addons:
+  - configRepository: https://github.com/mesosphere/kubernetes-base-addons
+    configVersion: stable-1.16-1.2.0
+    addonsList:
+    - name: cert-manager
+      enabled: true
+    - name: dashboard
+      enabled: true
+    - name: defaultstorageclass-protection
+      enabled: true
+    - name: dex
+      enabled: true
+    - name: dex-k8s-authenticator
+      enabled: true
+    - name: elasticsearch
+      enabled: false
+    - name: elasticsearch-curator
+      enabled: false
+    - name: elasticsearchexporter
+      enabled: false
+    - name: external-dns
+      enabled: false
+    - name: flagger
+      enabled: false
+    - name: fluentbit
+      enabled: true
+    - name: gatekeeper
+      enabled: true
+    - name: istio # Istio is currently in Preview
+      enabled: false
+    - name: kibana
+      enabled: false
+    - name: konvoyconfig
+      enabled: true
+    - name: kube-oidc-proxy
+      enabled: true
+    - name: localvolumeprovisioner
+      enabled: true
+    - name: metallb
+      enabled: true
+      values: |                    
+        configInline:
+          address-pools:
+          - name: default
+            protocol: layer2
+            # configure addresses for your network
+            addresses: [192.168.0.231-192.168.0.233]                   //사용가능한 서버 최소2개 (3개부터는 안정적)
+    - name: nvidia
+      enabled: false
+    - name: opsportal
+      enabled: true
+    - name: prometheus
+      enabled: false
+    - name: prometheusadapter
+      enabled: false
+    - name: reloader
+      enabled: true
+    - name: traefik
+      enabled: true
+    - name: traefik-forward-auth
+      enabled: true
+    - name: velero
+      enabled: true
+  - configRepository: https://github.com/mesosphere/kubeaddons-dispatch
+    configVersion: stable-1.16-1.0.0
+    addonsList:
+    - name: dispatch
+      enabled: false
+  - configRepository: https://github.com/mesosphere/kubeaddons-kommander
+    configVersion: stable-1.16-1.0.0
+    addonsList:
+    - name: kommander
+      enabled: true
+  version: v1.4.2
