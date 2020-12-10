@@ -18,7 +18,7 @@ if [ $? -eq 0 ]; then
 fi
 
 
-echo #install docker 1.13 version
+echo #install docker lastest version
 yum install -y yum-utils
 yum-config-manager \
     --add-repo \
