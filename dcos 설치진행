@@ -68,7 +68,14 @@ curl -O http://<bootstrap ip>:80/dcos_install.sh //dcos_install.sh 파일 설치
 bash dcos_install.sh slave //dcos private 설치 스크립트 실행
 
 
-dc/os UI 접속 후 
+http://<master ip>:80 //DCOS UI 접속
+
+*public node에 service 올리려면 아래 옵션 추가
+
+  "acceptedResourceRoles": [
+    "slave_public"
+  ],
+
 
 
 
