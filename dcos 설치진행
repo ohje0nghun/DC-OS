@@ -4,13 +4,10 @@ systemctl stop firewalld && systemctl disable firewalld    //방화벽 끄기
 
 yum -y install ntp  //ntp설치
 
-timedatactl set-ntp yes //ntp enabled yes확인
+timedatectl set-ntp yes //ntp enabled yes확인
 systemctl start ntpd && systemctl enable ntpd   //ntp synchroized yes확인
 
 bash setup_env.sh   //setup 스크립트 실행
-
-docker install //https://docs.docker.com/engine/install/centos/ <-여기서 설치
-systemctl start docker && systemctl enable docker //docker start 및 enable 활성화
 
 mkdir genconf
 cd genconf
