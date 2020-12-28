@@ -76,6 +76,11 @@ systemctl restart docker
 sudo systemctl stop firewalld
 sudo systemctl disable firewalld
 
+#setting ntp
+sudo yum install -y ntp
+timedatectl set-ntp yes
+systemctl start ntpd && systemctl enable ntpd
+
 
 #disable dnsmasq
 systemctl stop dnsmasq
