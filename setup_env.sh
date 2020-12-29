@@ -95,4 +95,6 @@ echo #clean up
 yum clean all
 rm -rf /tmp/* /var/tmp/*
 
+systemctl restart ntpd
+
 
