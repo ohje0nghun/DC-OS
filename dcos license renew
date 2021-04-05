@@ -1,0 +1,21 @@
+작업은 dcos master에서 
+
+1. dcos-license 서비스 중지
+systemctl stop dcos-licensing.socket
+systemctl stop dcos-licensing.service
+
+2. 기존 license 파일 백업 및 교체
+cp /opt/mesosphere/active/dcos-config/etc/license.txt /tmp/license.txt 
+cp license.txt /opt/mesosphere/active/dcos-config/etc/license.txt 
+
+3. 기존 dcos-licensing 바이너리 백업 및 교체
+cp /opt/mesosphere/active/dcos-licensing/bin/dcos-licensing /tmp/dcos-licensing  
+cp dcos-licensing /opt/mesosphere/active/dcos-licensing/bin/dcos-licensing 
+
+4. dcos-license 서비스 재시작
+systemctl start dcos-licensing.socket
+systemctl start dcos-licensing.service
+
+5. license 반영 여부 및 서비스 정상작동 확인
+systemctl status dcos-licensing.socket
+systemctl status dcos-licensing.service
