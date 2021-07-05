@@ -1,0 +1,31 @@
+master 노드 프로세스 정상 체크
+
+
+#!/bin/bash
+
+echo "|              Service name             |  Status  | Msg |"
+echo "|---------------------------------------|----------|-----|"
+for i in $(ls /etc/systemd/system/dcos.target.wants/ -1 |grep -Ev "socket" |grep -Ev "timer"); do
+        systemctl is-active --quiet $i && result="Active" || result="Inactive";
+
+        if [ $result == "Active" ]; then
+                echo -e "|  $i  | \e[1;32;40m  $result \e[0m |"
+        else
+                systemctl is-failed --quiet $i && result="Failed" || result="Inactive";
+                #echo -e "|  $i  | $result |"
+                if [ $result == "Inactive" ]; then
+                        echo -e "|  $i  | $result |"
+                else
+                        echo -e "|  $i  | $result |"
+                fi
+        fi
+
+done;
+
+
+
+하드웨어 체크(All)
+□	top -b -n1 | grep -Po '[0-9.]+ id' | awk '{print 100-$1}' #CPU
+□	sar -r 1  #MEM               
+□	df -h  #DISK
+□	systemctl status docker #DOCKER
