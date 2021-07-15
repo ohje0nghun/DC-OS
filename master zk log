@@ -1,0 +1,14 @@
+this is the commands to retrieve zk logs:
+
+ 1. login to each master node
+ 2. run below command: 
+     sudo journalctl -u docs-exhibitor.serivice > zk.log
+
+
+or you can generate  a 1-liner log which contains all component logs on a node:
+1. login to each master node
+2. run below command:
+
+d=$(date -u +%Y%m%d-%H%M%S) && tmp_dir=/tmp/dcos_diagnostics-${d} && if sudo systemctl | grep dcos | grep master > /dev/null; then node_type=master; elif sudo systemctl | grep dcos | grep public > /dev/null; then node_type=agent_public; else node_type=agent; fi; node_dir=${tmp_dir}/$(/opt/mesosphere/bin/detect_ip)_${node_type} && mkdir -p ${node_dir} && sudo dmesg -T > ${node_dir}/dmesg-0.output && for unit in $(sudo systemctl list-units --no-legend --no-pager --plain 'dcos-*' | awk '{print $1}'); do echo "Saving logs for ${unit}"; sudo journalctl -au ${unit} > ${node_dir}/${unit}; done && tar -czvf $(/opt/mesosphere/bin/detect_ip)_${node_type}-${d}.tgz -C $tmp_dir .
+
+then a file named " {node IP}-{node type}-{date}.tgz" will be generated under /tmp folder
